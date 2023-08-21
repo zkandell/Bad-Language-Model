@@ -1,0 +1,1 @@
+This is a series of snapshots of the project. Each is the code that I had in the playground.py file at around the time of the timestamp in the file name. I cannot guarantee that you will be able to run these files, but they should give you a good idea of how the project progressed. The most recent, working version of the code is in the main directory, and is called playground.py.

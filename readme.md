@@ -1,0 +1,1 @@
+The idea: experiment with creating a language model from very basic, but flawed components. This is a learning experience, not anything I expect to ever really work. 
