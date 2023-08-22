@@ -246,6 +246,45 @@ class NgramMatrix:
         # Return the word
         return word
 
+# So, here start the sampler classes
+# These manipulate the probabilities of the letters
+# They're used because raw next token probabilities are a bad idea
+# They're also used because I want to see if I can do it
+# At some point, I'll create a base sampler class
+# And then have each sampler inherit from that
+# But for now, I'm just going to make them all separately
+# And figure out the generalizations later
+
+# This class attempts to make words that are of normal length
+# It does this by manipulating the probabilities based on the length of the word so far
+class WordLenSampler:
+    def __init__(self,wordlist):
+        # Suck in the word list
+        self.wordlist = wordlist
+        # Get the word length probabilities
+        self.wordlengthprobs = self.get_word_length_probabilities()
+
+    # Turns the list of words into a list of word lengths
+    def get_word_lengths(self):
+        return [len(word) for word in self.wordlist]
+    
+    # Turns the list of word lengths into a list of probabilities
+    # The probability of a word length is the number of words of that length divided by the total number of words
+    def get_word_length_probabilities(self):
+        # Get the word lengths
+        wordlengths = self.get_word_lengths()
+        # Get the number of words of each length
+        wordlengthcounts = [wordlengths.count(i) for i in range(1,max(wordlengths)+1)]
+        # Get the total number of words
+        totalwords = len(wordlengths)
+        # Get the probabilities
+        wordlengthprobs = [wordlengthcount / totalwords for wordlengthcount in wordlengthcounts]
+        # Return the probabilities
+        return wordlengthprobs
+        
+
+
+
 # Take in the word list file and turn it into, well, a list of words.
 def get_word_list(fname):
     with open(fname) as f:
@@ -355,3 +394,7 @@ print(time.time() - starttime)
 # Now, let's generate 10 random words
 for i in range(10):
     print(testmatrix.generate_word())
+
+# Okay, here, test the sampler
+testlensampler = WordLenSampler(wordlist)
+print(testlensampler.wordlengthprobs)
