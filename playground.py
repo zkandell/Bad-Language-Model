@@ -85,26 +85,36 @@ class NgramMatrix:
         # If no matrix is given, use the base matrix
         if matrix == None:
             matrix = self.basematrix
-        # Add the matrix to the dictionary
+        # Add a copy of the matrix to the dictionary
         self.matrices[name] = matrix.copy()
         # Return the matrix
         return matrix
     
     # Takes an in-progress matrix and a word and updates the matrix
-    def update_matrix(self,matrix,word):
+    def update_matrix(self,word,matrix=None):
+        # If no matrix is given, use the cumulative matrix
+        if matrix is None:
+            matrix = self.cumulativematrix
         # Get the n-grams from the word
         ngrams = self.word_to_ngrams(word)
         # For each n-gram in the word
         for ngram in ngrams:
-            # Add 1 to the value of the matrix at the corresponding position
-            matrix[ngram] += 1
+            # If the matrix being updated is not the cumulative matrix
+            # Then you update the named matrix
+            if matrix is not self.cumulativematrix:           
+                matrix[ngram] += 1
+            # You ALWAYS update the cumulative matrix
+            self.cumulativematrix[ngram] += 1
 
     # Takes in a list of words and trains the matrix on those words
-    def train_matrix(self,wordlist):
+    def train_matrix(self,wordlist,matrix=None):
+        # If no matrix is given, use the cumulative matrix
+        if matrix is None:
+            matrix = self.cumulativematrix
         # For each word in the word list
         for word in wordlist:
             # Update the cumulative matrix
-            self.update_matrix(self.cumulativematrix,word)
+            self.update_matrix(word,matrix)
         # Update the normalized matrix
         self.normalizedmatrix = self.normalize_matrix(self.cumulativematrix)
         # Return the cumulative matrix
