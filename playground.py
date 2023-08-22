@@ -26,6 +26,15 @@ class NgramMatrix:
         # The normalized matrix is the cumulative matrix, but with each row normalized
         # This is used to generate random words
         self.normalizedmatrix = self.normalize_matrix(self.cumulativematrix)
+        # A dictionary that can hold arbitrary matrices
+        # This is used to keep track of matrices that have been trained on different word lists
+        # The key is the name of the matrix
+        # The value is the matrix itself
+        self.matrices = {'cumulative':self.cumulativematrix,'normalized':self.normalizedmatrix}
+        # Note to self: it might not make sense to have the normalized matrix in here
+        # It might be better to normalize matrices as needed
+        # Or even a separate matrix class to store the matrix and its normalized form
+        # I'll figure that out later
 
     # Function that maps characters to their index in the alphabet
     def letter_to_num(self,letter):
@@ -47,8 +56,13 @@ class NgramMatrix:
     # Adds leading and trailing spaces to a word
     # This is used to make sure that the first and last letters of a word are treated as the first and last letters of a word
     # There need to be n-1 spaces at the start and one space at the end of the word
-    def pad_word(self,word):
-        return ' ' * (self.n - 1) + word + ' '
+    # endspaces can be set to False to not add the space at the end of the word
+    def pad_word(self,word,endspaces=True):
+        # Strip spaces from the start and end of the word
+        word = word.strip()
+        # Add n-1 spaces to the start of the word
+        # And one space to the end of the word
+        return ' ' * (self.n - 1) + word + ' ' * (1 if endspaces else 0)
 
     # Normally, "n-gram" refers to a sequence of n words, but it can also refer to a sequence of n letters
     # This function takes in a word and returns a list of n-grams (as numbers)
