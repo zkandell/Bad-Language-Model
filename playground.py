@@ -78,6 +78,18 @@ class NgramMatrix:
         # We don't convert these back to letters because numbers are easier to work with
         return tuples
     
+    # Adds a matrix to the dictionary of matrices
+    # The key is the name of the matrix
+    # By default, the matrix is the base matrix
+    def add_matrix(self,name,matrix=None):
+        # If no matrix is given, use the base matrix
+        if matrix == None:
+            matrix = self.basematrix
+        # Add the matrix to the dictionary
+        self.matrices[name] = matrix.copy()
+        # Return the matrix
+        return matrix
+    
     # Takes an in-progress matrix and a word and updates the matrix
     def update_matrix(self,matrix,word):
         # Get the n-grams from the word
