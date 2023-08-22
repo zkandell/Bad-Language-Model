@@ -46,9 +46,9 @@ class NgramMatrix:
     
     # Adds leading and trailing spaces to a word
     # This is used to make sure that the first and last letters of a word are treated as the first and last letters of a word
-    # There need to be n-1 spaces at the start and end of the word
+    # There need to be n-1 spaces at the start and one space at the end of the word
     def pad_word(self,word):
-        return ' ' * (self.n - 1) + word + ' ' * (self.n - 1)
+        return ' ' * (self.n - 1) + word + ' '
 
     # Normally, "n-gram" refers to a sequence of n words, but it can also refer to a sequence of n letters
     # This function takes in a word and returns a list of n-grams (as numbers)
@@ -107,7 +107,6 @@ class NgramMatrix:
         # Return the flat list
         return flat
         
-
     # A function that returns the n most common 2-grams in the matrix
     # The return value is a list of tuples
     # The first element of the tuple is the 2-gram (as a string of letters, NOT NUMBERS)
@@ -145,13 +144,30 @@ class NgramMatrix:
         # Return the normalized matrix
         return normalized
     
-    # A function that randomly chooses the next letter based on the normalized matrix
-    # This is called by the generate_word function to keep getting new letters
-    def choose_next_letter(self,letters):
+    # A function that returns the probabilities of each letter following the given letters
+    # This can be used within this class by the choose_next_letter function
+    # Or it can be used outside this class to get the probabilities of each letter following a given string
+    # Using it outside this class allows samplers to manipulate the probabilities separately
+    # Turns out, using raw probabilities continuously is a bad idea
+    def get_probabilities(self,letters):
+        # If there are too many letters, trim it down to the last n-1 letters
+        if len(letters) > self.n - 1:
+            letters = letters[-(self.n - 1):]
+        # If there are too few letters, pad it with spaces at the start
+        elif len(letters) < self.n - 1:
+            letters = ' ' * (self.n - 1 - len(letters)) + letters
         # Convert the letters to numbers
         nums = [self.letter_to_num(letter) for letter in letters]
         # Get the row of the normalized matrix corresponding to the given letters
         row = self.normalizedmatrix[tuple(nums)]
+        # Return the row
+        return row
+    
+    # A function that randomly chooses the next letter based on the normalized matrix
+    # This is called by the generate_word function to keep getting new letters
+    def choose_next_letter(self,letters):
+        # Get the row of the normalized matrix corresponding to the given letters
+        row = self.get_probabilities(letters)
         # Choose a random number between 0 and 1
         r = random.random()
         # Initialize the cumulative probability
