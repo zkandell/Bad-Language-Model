@@ -282,8 +282,67 @@ class WordLenSampler:
         # Return the probabilities
         return wordlengthprobs
         
+# This class throws out a certain number of low probability tokens
+# It keeps the top k tokens
+class TopKSampler:
+    def __init__(self):
+        pass
 
+    # Get the row of the normalized matrix corresponding to the given letters
+    def get_probs(self,letters,ngrammatrix):
+        # Get the row of the normalized matrix corresponding to the given letters
+        row = ngrammatrix.get_probabilities(letters)
+        # Return the row
+        return row
 
+    # Takes in a row of probabilities and returns a list of the top k tokens
+    def get_top_k(self,row,k):
+        # Convert the row to a list of tuples
+        # The first element of the tuple is the index
+        # The second element of the tuple is the probability
+        row = [(i,row[i]) for i in range(len(row))]
+        # Sort the row by probability
+        row = sorted(row,key=lambda x: x[1],reverse=True)
+        # Get the top k tokens
+        topklist = row[0:k]
+        # Return the top k tokens
+        return topklist
+    
+    # Takes the top k tokens and creates a new row of probabilities
+    # The top k tokens keep their original probabilities for now
+    # The rest of the tokens are given 0 probability
+    def get_new_row(self,topklist,row):
+        # Initialize the new row
+        newrow = [0 for i in range(len(row))]
+        # For each token in the top k
+        for token in topklist:
+            # Add the token and its probability to the new row
+            newrow[token[0]] = token[1]
+        # Return the new row
+        return newrow
+    
+    # Normalizes the row of probabilities
+    # Normalization here means that the sum of the row is 1
+    def normalize_row(self,row):
+        # Normalize the row
+        norm = np.sum(row)
+        normalized = row / norm
+        # Return the normalized row
+        return normalized
+    
+    # Put it all together to get the new probabilities
+    # In goes the current string of tokens, the current matrix, and the top k value
+    # Out comes the new probabilities
+    def get_new_probs(self,letters,ngrammatrix,k):
+        # Get the row of probabilities
+        baseprobs = self.get_probs(letters,ngrammatrix)
+        # Get the top k token and put them in a row
+        topklist = self.get_top_k(baseprobs,k)
+        topkrow = self.get_new_row(topklist,baseprobs)
+        # Normalize the row
+        newprobs = self.normalize_row(topkrow)
+        # Return the new probabilities
+        return newprobs
 
 # Take in the word list file and turn it into, well, a list of words.
 def get_word_list(fname):
@@ -398,3 +457,9 @@ for i in range(10):
 # Okay, here, test the sampler
 testlensampler = WordLenSampler(wordlist)
 print(testlensampler.wordlengthprobs)
+
+# Okay, here, test the top k sampler
+testtopksampler = TopKSampler()
+letters = 'hello'
+print(testtopksampler.get_probs(letters,testmatrix))
+print(testtopksampler.get_new_probs(letters,testmatrix,5))
