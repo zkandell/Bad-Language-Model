@@ -2,7 +2,7 @@ import random
 import time
 import numpy as np
 
-# This class represents an n-gram matrix
+# This class represents an n-gram tensor
 # It's an n-dimensional array of numbers
 # The first index is the first letter of the n-gram
 # And so on and so forth
