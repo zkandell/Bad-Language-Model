@@ -6,7 +6,7 @@ import numpy as np
 # It's an n-dimensional array of numbers
 # The first index is the first letter of the n-gram
 # And so on and so forth
-class NgramMatrix:
+class Ngrams:
     def __init__(self,alphabet,n):
         # Suck in the alphabet, which is going to be a list of characters
         # Not a string, because that is making assumptions about the alphabet
@@ -331,11 +331,11 @@ class TopKSampler:
         return normalized
     
     # Put it all together to get the new probabilities
-    # In goes the current string of tokens, the current matrix, and the top k value
+    # In goes the current string of tokens, the current tensor, and the top k value
     # Out comes the new probabilities
-    def get_new_probs(self,letters,ngrammatrix,k):
+    def get_new_probs(self,letters,ngrams,k):
         # Get the row of probabilities
-        baseprobs = self.get_probs(letters,ngrammatrix)
+        baseprobs = self.get_probs(letters,ngrams)
         # Get the top k token and put them in a row
         topklist = self.get_top_k(baseprobs,k)
         topkrow = self.get_new_row(topklist,baseprobs)
@@ -366,7 +366,7 @@ alphabet = [char for char in alphabet]
 # Use the alphabet to create the matrix
 # testmatrix = TwogramMatrix(alphabet)
 # To be figured out later:
-testmatrix = NgramMatrix(alphabet,3)
+testmatrix = Ngrams(alphabet,3)
 # That will be used to generate 3-grams, 4-grams, etc.
 # But the first test of it will be to recreate the 2-gram matrix without changing anything below
 # Wish me luck on that endeavor
