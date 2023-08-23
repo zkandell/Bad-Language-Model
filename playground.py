@@ -306,29 +306,33 @@ class WordLenSampler:
             return 1
         # Otherwise, return the cumulative probability of the word length
         return self.cumwordlengthprobs[length]
+    
+    # Normalizes the row of probabilities
+    # Normalization here means that the sum of the row is 1
+    def normalize_row(self,row):
+        # Normalize the row
+        norm = np.sum(row)
+        normalized = row / norm
+        # Return the normalized row
+        return normalized
 
     # Takes in a row of probabilities and returns a new row of probabilities
-    # The idea: roll a die to determine if the word should end
-    # If the word should end, then the probability of the space token is increased to 1
-    # And all other probabilities are set to 0
-    # Otherwise, the probabilities are unchanged
+    # This adds a probability that the word should end
+    # The likelihood that the word should end is added to the existing probability of the space token
+    # Then the row is normalized
     def get_new_row(self,row,word):
+        # Make a copy of the row
+        newrow = row.copy()
         # Get the probability that the word should end
         endwordprob = self.get_end_word_probability(word)
-        # Roll a die
-        r = random.random()
-        # If the word should end
-        if r < endwordprob:
-            # Initialize the new row
-            newrow = [0 for i in range(len(row))]
-            # Set the space token to 1
-            newrow[0] = 1
-            # Return the new row
-            return newrow
-        # If the word shouldn't end
-        else:
-            # Return the original row
-            return row
+        # Add the probability that the word should end to the space token
+        spaceindex = self.letter_to_num(' ')
+        newrow[spaceindex] += endwordprob
+        # Normalize the row
+        newrow = self.normalize_row(newrow)
+        # Return the new row
+        return newrow
+        
 
 # This class throws out a certain number of low probability tokens
 # It keeps the top k tokens
