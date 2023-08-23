@@ -263,6 +263,8 @@ class WordLenSampler:
         self.wordlist = wordlist
         # Get the word length probabilities
         self.wordlengthprobs = self.get_word_length_probabilities()
+        # Get the cumulative word length probabilities
+        self.cumwordlengthprobs = self.get_cumulative_word_length_probabilities()
 
     # Turns the list of words into a list of word lengths
     def get_word_lengths(self):
@@ -281,7 +283,53 @@ class WordLenSampler:
         wordlengthprobs = [wordlengthcount / totalwords for wordlengthcount in wordlengthcounts]
         # Return the probabilities
         return wordlengthprobs
-        
+    
+    # Takes the probabilities by word length and turns it into cumulative probabilities
+    def get_cumulative_word_length_probabilities(self):
+        # Get the word length probabilities
+        wordlengthprobs = self.wordlengthprobs
+        # Initialize the cumulative probabilities
+        cumprobs = [0 for i in range(len(wordlengthprobs))]
+        # For each word length
+        for i in range(len(wordlengthprobs)):
+            # Add the probability of the word length to the cumulative probability
+            cumprobs[i] = cumprobs[i-1] + wordlengthprobs[i]
+        # Return the cumulative probabilities
+        return cumprobs
+    
+    # Determines the likelihood that the word should end at its current length
+    # Uses the cumulative probabilities
+    def get_end_word_probability(self,word):
+        length = len(word)
+        # If the word is too long, return 1
+        if length > len(self.cumwordlengthprobs):
+            return 1
+        # Otherwise, return the cumulative probability of the word length
+        return self.cumwordlengthprobs[length]
+
+    # Takes in a row of probabilities and returns a new row of probabilities
+    # The idea: roll a die to determine if the word should end
+    # If the word should end, then the probability of the space token is increased to 1
+    # And all other probabilities are set to 0
+    # Otherwise, the probabilities are unchanged
+    def get_new_row(self,row,word):
+        # Get the probability that the word should end
+        endwordprob = self.get_end_word_probability(word)
+        # Roll a die
+        r = random.random()
+        # If the word should end
+        if r < endwordprob:
+            # Initialize the new row
+            newrow = [0 for i in range(len(row))]
+            # Set the space token to 1
+            newrow[0] = 1
+            # Return the new row
+            return newrow
+        # If the word shouldn't end
+        else:
+            # Return the original row
+            return row
+
 # This class throws out a certain number of low probability tokens
 # It keeps the top k tokens
 class TopKSampler:
@@ -289,9 +337,9 @@ class TopKSampler:
         pass
 
     # Get the row of the normalized matrix corresponding to the given letters
-    def get_probs(self,letters,ngrammatrix):
+    def get_probs(self,letters,ngramtensor):
         # Get the row of the normalized matrix corresponding to the given letters
-        row = ngrammatrix.get_probabilities(letters)
+        row = ngramtensor.get_probabilities(letters)
         # Return the row
         return row
 
@@ -343,6 +391,19 @@ class TopKSampler:
         newprobs = self.normalize_row(topkrow)
         # Return the new probabilities
         return newprobs
+    
+# This class keeps new tokens that add up to a certain percentage of the total probability
+# The rest of the tokens are thrown out
+class TopPSampler:
+    def __init__(self):
+        pass
+
+    # Get the row of the normalized matrix corresponding to the given letters
+    def get_probs(self,letters,ngrammatrix):
+        # Get the row of the normalized matrix corresponding to the given letters
+        row = ngrammatrix.get_probabilities(letters)
+        # Return the row
+        return row
 
 # Take in the word list file and turn it into, well, a list of words.
 def get_word_list(fname):
