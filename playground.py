@@ -381,9 +381,9 @@ class TopKSampler:
     # Put it all together to get the new probabilities
     # In goes the current string of tokens, the current tensor, and the top k value
     # Out comes the new probabilities
-    def get_new_probs(self,letters,ngrams,k):
+    def get_new_probs(self,letters,ngramtensor,k):
         # Get the row of probabilities
-        baseprobs = self.get_probs(letters,ngrams)
+        baseprobs = self.get_probs(letters,ngramtensor)
         # Get the top k token and put them in a row
         topklist = self.get_top_k(baseprobs,k)
         topkrow = self.get_new_row(topklist,baseprobs)
@@ -404,6 +404,69 @@ class TopPSampler:
         row = ngrammatrix.get_probabilities(letters)
         # Return the row
         return row
+    
+    # Takes in a row of probabilities and returns the tokens that add up to the top p percent
+    def get_top_p(self,row,p):
+        # Convert the row to a list of tuples
+        # The first element of the tuple is the index
+        # The second element of the tuple is the probability
+        row = [(i,row[i]) for i in range(len(row))]
+        # Sort the row by probability
+        row = sorted(row,key=lambda x: x[1],reverse=True)
+        # Initialize the cumulative probability
+        cumprob = 0
+        # Initialize the top p list
+        topp = []
+        # For each token in the row
+        for token in row:
+            # Add the probability of the token to the cumulative probability
+            cumprob += token[1]
+            # Add the token to the top p list
+            topp.append(token)
+            # If the cumulative probability is greater than the top p percent
+            if cumprob > p:
+                # Return the top p list
+                return topp
+        # If we get here, something went wrong
+        # I don't know what, but something
+        # So raise an error
+        raise Exception('Something went wrong in get_top_p')
+    
+    # Takes the top p tokens and creates a new row of probabilities
+    # The top p tokens keep their original probabilities for now
+    # The rest of the tokens are given 0 probability
+    def get_new_row(self,topplist,row):
+        # Initialize the new row
+        newrow = [0 for i in range(len(row))]
+        # For each token in the top p
+        for token in topplist:
+            # Add the token and its probability to the new row
+            newrow[token[0]] = token[1]
+        # Return the new row
+        return newrow
+    
+    # Normalizes the row of probabilities
+    # Normalization here means that the sum of the row is 1
+    def normalize_row(self,row):
+        # Normalize the row
+        norm = np.sum(row)
+        normalized = row / norm
+        # Return the normalized row
+        return normalized
+    
+    # Put it all together to get the new probabilities
+    # In goes the current string of tokens, the current tensor, and the top p value
+    # Out comes the new probabilities
+    def get_new_probs(self,letters,ngramtensor,p):
+        # Get the row of probabilities
+        baseprobs = self.get_probs(letters,ngramtensor)
+        # Get the top p token and put them in a row
+        topplist = self.get_top_p(baseprobs,p)
+        topprow = self.get_new_row(topplist,baseprobs)
+        # Normalize the row
+        newprobs = self.normalize_row(topprow)
+        # Return the new probabilities
+        return newprobs
 
 # Take in the word list file and turn it into, well, a list of words.
 def get_word_list(fname):
