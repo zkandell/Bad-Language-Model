@@ -18,19 +18,19 @@ class Ngrams:
         self.n = n
         # Create the base matrix, an n-dimensional array of ones
         # The dimensions are all the same as the length of the alphabet
-        self.basematrix = np.ones([self.lenalpha for i in range(self.n)],dtype=int)
+        self.basetensor = np.ones([self.lenalpha for i in range(self.n)],dtype=int)
         # Create the cumulative matrix, which is the matrix we're actually going to use
         # It starts out as a copy of the base matrix
         # As we train the matrix, we'll update the cumulative matrix
-        self.cumulativematrix = self.basematrix.copy()
+        self.cumulativetensor = self.basetensor.copy()
         # The normalized matrix is the cumulative matrix, but with each row normalized
         # This is used to generate random words
-        self.normalizedmatrix = self.normalize_matrix(self.cumulativematrix)
+        self.normalizedtensor = self.normalize_tensor(self.cumulativetensor)
         # A dictionary that can hold arbitrary matrices
         # This is used to keep track of matrices that have been trained on different word lists
         # The key is the name of the matrix
         # The value is the matrix itself
-        self.matrices = {'cumulative':self.cumulativematrix,'normalized':self.normalizedmatrix}
+        self.tensors = {'cumulative':self.cumulativetensor,'normalized':self.normalizedtensor}
         # Note to self: it might not make sense to have the normalized matrix in here
         # It might be better to normalize matrices as needed
         # Or even a separate matrix class to store the matrix and its normalized form
@@ -78,10 +78,10 @@ class Ngrams:
         # We don't convert these back to letters because numbers are easier to work with
         return tuples
     
-    # Adds a matrix to the dictionary of matrices
-    # The key is the name of the matrix
-    # By default, the matrix is the base matrix
-    def add_matrix(self,name,matrix=None):
+    # Adds a tensor to the dictionary of tensors
+    # The key is the name of the tensor
+    # By default, the tensor is the base tensor
+    def add_tensor(self,name,matrix=None):
         # If no matrix is given, use the base matrix
         if matrix == None:
             matrix = self.basematrix
@@ -90,37 +90,37 @@ class Ngrams:
         # Return the matrix
         return matrix
     
-    # Takes an in-progress matrix and a word and updates the matrix
-    def update_matrix(self,word,matrix=None):
-        # If no matrix is given, use the cumulative matrix
-        if matrix is None:
-            matrix = self.cumulativematrix
+    # Takes an in-progress tensor and a word and updates the tensor
+    def update_matrix(self,word,tensor=None):
+        # If no tensor is given, use the cumulative tensor
+        if tensor is None:
+            tensor = self.cumulativetensor
         # Get the n-grams from the word
         ngrams = self.word_to_ngrams(word)
         # For each n-gram in the word
         for ngram in ngrams:
             # If the matrix being updated is not the cumulative matrix
             # Then you update the named matrix
-            if matrix is not self.cumulativematrix:           
-                matrix[ngram] += 1
+            if tensor is not self.cumulativetensor:           
+                tensor[ngram] += 1
             # You ALWAYS update the cumulative matrix
-            self.cumulativematrix[ngram] += 1
+            self.cumulativetensor[ngram] += 1
 
-    # Takes in a list of words and trains the matrix on those words
-    def train_matrix(self,wordlist,matrix=None):
+    # Takes in a list of words and trains the tensor on those words
+    def train_tensor(self,wordlist,tensor=None):
         # If no matrix is given, use the cumulative matrix
-        if matrix is None:
-            matrix = self.cumulativematrix
+        if tensor is None:
+            tensor = self.cumulativetensor
         # For each word in the word list
         for word in wordlist:
             # Update the cumulative matrix
-            self.update_matrix(word,matrix)
+            self.update_matrix(word,tensor)
         # Update the normalized matrix
-        self.normalizedmatrix = self.normalize_matrix(self.cumulativematrix)
+        self.normalizedtensor = self.normalize_tensor(self.cumulativetensor)
         # Return the cumulative matrix
-        return self.cumulativematrix
+        return self.cumulativetensor
     
-    # Since the matrix is an n-dimensional array, it's not easy to print
+    # Since the tensor is an n-dimensional array, it's not easy to print
     # So I'm not going to bother with that for now
     def print_matrix(self,matrix):
         pass
@@ -129,39 +129,39 @@ class Ngrams:
     def export_matrix(self,matrix,filename):
         pass
 
-    # A function that "flattens" the matrix into a list of tuples
+    # A function that "flattens" the tensor into a list of tuples
     # The first element of the tuple is the n-gram (as a string of letters, NOT NUMBERS)
     # The second element of the tuple is the frequency of that n-gram
-    def flatten_matrix(self,matrix):
+    def flatten_matrix(self,tensor):
         # Initialize the flat list
         flat = []
-        # Enumerate the matrix
-        for index,value in np.ndenumerate(matrix):
+        # Enumerate the tensor
+        for index,value in np.ndenumerate(tensor):
             ngram = self.num_list_to_word(index)
             # Add the index and value to the flat list
             flat.append((ngram,value))
         # Return the flat list
         return flat
         
-    # A function that returns the n most common 2-grams in the matrix
+    # A function that returns the n most common n-grams in the tensor
     # The return value is a list of tuples
-    # The first element of the tuple is the 2-gram (as a string of letters, NOT NUMBERS)
-    # The second element of the tuple is the frequency of that 2-gram
-    def most_common(self,matrix,n):
+    # The first element of the tuple is the n-gram (as a string of letters, NOT NUMBERS)
+    # The second element of the tuple is the frequency of that n-gram
+    def most_common(self,tensor,n):
         # Flatten the matrix
-        flat = self.flatten_matrix(matrix)
+        flat = self.flatten_matrix(tensor)
         # Sort the flattened matrix by frequency
         flat = sorted(flat,key=lambda x: x[1],reverse=True)
         # Return the n most common 2-grams
         return flat[0:n]
     
-    # A function that returns the n least common 2-grams in the matrix
+    # A function that returns the n least common n-grams in the tensor
     # The return value is a list of tuples
-    # The first element of the tuple is the 2-gram (as a string of letters, NOT NUMBERS)
-    # The second element of the tuple is the frequency of that 2-gram
-    def least_common(self,matrix,n):
+    # The first element of the tuple is the n-gram (as a string of letters, NOT NUMBERS)
+    # The second element of the tuple is the frequency of that n-gram
+    def least_common(self,tensor,n):
         # Flatten the matrix
-        flat = self.flatten_matrix(matrix)
+        flat = self.flatten_matrix(tensor)
         # Sort the flattened matrix by frequency
         flat = sorted(flat,key=lambda x: x[1])
         # Return the n least common 2-grams
@@ -170,14 +170,14 @@ class Ngrams:
     # A function that normalizes a matrix
     # Each row is normalized so that the sum of the row is 1
     # These end up being the weights used to generate random words
-    def normalize_matrix(self,matrix):
+    def normalize_tensor(self,tensor):
         # Normalize the array along the last axis
         # This is the axis that corresponds to the last letter of the n-gram
         # This is the axis that we want to sum over
-        norm = np.sum(matrix,axis=-1,keepdims=True)
-        # Divide the matrix by the norm
-        normalized = matrix / norm
-        # Return the normalized matrix
+        sum = np.sum(tensor,axis=-1,keepdims=True)
+        # Divide the matrix by the sum
+        normalized = tensor / sum
+        # Return the normalized tensor
         return normalized
     
     # A function that returns the probabilities of each letter following the given letters
@@ -195,7 +195,7 @@ class Ngrams:
         # Convert the letters to numbers
         nums = [self.letter_to_num(letter) for letter in letters]
         # Get the row of the normalized matrix corresponding to the given letters
-        row = self.normalizedmatrix[tuple(nums)]
+        row = self.normalizedtensor[tuple(nums)]
         # Return the row
         return row
     
@@ -222,7 +222,7 @@ class Ngrams:
         raise Exception('Something went wrong in choose_next_letter')
     
     # A function that generates a random word
-    # The word is generated using the normalized matrix
+    # The word is generated using the normalized tensor
     # The normalized matrix is a list of lists of weights
     # The weights are the probability of each letter following the previous letter
     # start is the string the user wants the word to start with
@@ -366,7 +366,7 @@ alphabet = [char for char in alphabet]
 # Use the alphabet to create the matrix
 # testmatrix = TwogramMatrix(alphabet)
 # To be figured out later:
-testmatrix = Ngrams(alphabet,3)
+testtensor = Ngrams(alphabet,3)
 # That will be used to generate 3-grams, 4-grams, etc.
 # But the first test of it will be to recreate the 2-gram matrix without changing anything below
 # Wish me luck on that endeavor
@@ -417,7 +417,7 @@ wordlist = get_word_list('wordlist.txt')
 
 # A quick test to make sure the function works
 # Despite what I said above, this one has to be changed to use ngrams instead of 2grams
-print(testmatrix.word_to_ngrams('hello'))
+print(testtensor.word_to_ngrams('hello'))
 
 # Some words to train the matrix on
 # words = ["hello","world"]
@@ -427,7 +427,7 @@ words = wordlist
 starttime = time.time()
 
 # Train the matrix on the words
-testmatrix.train_matrix(words)
+testtensor.train_tensor(words)
 
 # How long did that take?
 print(time.time() - starttime)
@@ -452,7 +452,7 @@ print(time.time() - starttime)
 
 # Now, let's generate 10 random words
 for i in range(10):
-    print(testmatrix.generate_word())
+    print(testtensor.generate_word())
 
 # Okay, here, test the sampler
 testlensampler = WordLenSampler(wordlist)
@@ -461,5 +461,5 @@ print(testlensampler.wordlengthprobs)
 # Okay, here, test the top k sampler
 testtopksampler = TopKSampler()
 letters = 'hello'
-print(testtopksampler.get_probs(letters,testmatrix))
-print(testtopksampler.get_new_probs(letters,testmatrix,5))
+print(testtopksampler.get_probs(letters,testtensor))
+print(testtopksampler.get_new_probs(letters,testtensor,5))
