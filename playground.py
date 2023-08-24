@@ -326,8 +326,9 @@ class WordLenSampler:
         # Get the probability that the word should end
         endwordprob = self.get_end_word_probability(word)
         # Add the probability that the word should end to the space token
-        spaceindex = self.letter_to_num(' ')
-        newrow[spaceindex] += endwordprob
+        # This assumes that the space token is the first token in the row
+        # TODO: Make this more general
+        newrow[0] += endwordprob
         # Normalize the row
         newrow = self.normalize_row(newrow)
         # Return the new row
@@ -579,15 +580,68 @@ print(time.time() - starttime)
 #print(testmatrix.least_common(testmatrix.cumulativematrix,100))
 
 # Now, let's generate 10 random words
+#for i in range(10):
+#    print(testtensor.generate_word())
+
+# Okay, a different way to generate some words
+# Start with nothing
+testword = ''
+
+# Create the samplers
+wordlensampler = WordLenSampler(wordlist)
+topksampler = TopKSampler()
+toppsampler = TopPSampler()
+
+def roughwordgen(stem=''):
+    word = stem
+
+    # Let's start looping!
+    while True:
+        # Initialize the new letter
+        newletter = ''
+        # Full random when the word is empty
+        # If you use samplers when the word is empty, you limit the first letter to the top k tokens
+        # Which cuts some potential letters out entirely, which is bad
+        if word == '':
+            # Choose a first letter directly from testtensor
+            word += testtensor.choose_next_letter('')
+        # Otherwise, we engage in some tomfoolery
+        # By which I mean we use samplers
+        else:
+            # First, we get the probabilities of each letter following the current word
+            row = testtensor.get_probabilities(word)
+            # Run it through the word length sampler
+            # This is the one that tries to make words of normal length
+            wordlenrow = wordlensampler.get_new_row(row,word)
+            # Then we run it through the top k sampler
+            # This needs to be cleaned up a lot
+            # Turns out my assumptions about how the samplers would work were wrong
+            # But I'll make this work, somehow, eventually
+            # Take in the updated row of probabilities
+            baseprobs = wordlenrow
+            # Get the top k token and put them in a row
+            topklist = topksampler.get_top_k(baseprobs,10)
+            topkrow = topksampler.get_new_row(topklist,baseprobs)
+            # Normalize the row
+            newrow = topksampler.normalize_row(topkrow)
+            # We could also run it through the top p sampler
+            # But I'm not going to do that right now
+            # Might limit things too much
+            # Instead, we now have a modified row of probabilities
+            # So, we choose the next letter from that row
+            cumprob = 0
+            r = random.random()
+            for i in range(len(newrow)):
+                cumprob += newrow[i]
+                if cumprob > r:
+                    newletter = testtensor.num_to_letter(i)
+                    break
+            # Add the new letter to the word
+            word += newletter
+        # If the new letter is a space, we're done
+        if newletter == ' ':
+            return word
+
+# Generate 10 random words
 for i in range(10):
-    print(testtensor.generate_word())
-
-# Okay, here, test the sampler
-testlensampler = WordLenSampler(wordlist)
-print(testlensampler.wordlengthprobs)
-
-# Okay, here, test the top k sampler
-testtopksampler = TopKSampler()
-letters = 'hello'
-print(testtopksampler.get_probs(letters,testtensor))
-print(testtopksampler.get_new_probs(letters,testtensor,5))
+    print(roughwordgen())
